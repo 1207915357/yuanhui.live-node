@@ -1,6 +1,7 @@
 const config = require('../config');
 const User_col = require('../model/user');
 const uuidV1 = require('uuid/v1')
+const passport = require('../utils/passport')
 
 const get = async (ctx, next) => {
   ctx.status = 200;
@@ -28,42 +29,34 @@ const login = async (ctx, next) => {
 
   // 获取用户的 userId
   const user = await User_col.findOne({
-    account: req.account
-  }, {
-    __v: 0,
-    _id: 0
+    userName: req.userName
   });
   if (!user) {
     ctx.status = 200;
     ctx.body = {
-      code: 0,
-      msg: 'account or password error!'
+      code: 300,
+      msg: 'User does not exist!'
     }
     return;
   }
 
-  const userId = user.userId;
-
-  // 获取数据库中的 hash
-  const pass = await Passport_col.findOne({
-    userId
-  }, {
-    hash: 1,
-  });
-
-  const match = await passport.validate(req.password, pass.hash);
+  const password = user.password;
   ctx.status = 200;
-  if (match) {
+  if (password === passport.cryptoPwd(req.password)) {
     ctx.body = {
       code: 1,
       msg: 'login success',
-      data: user
+      data: {
+          userName:user.userName,
+          userId: user.userId,
+          likeArticle:user.likeArticle
+      }
     }
     return;
   }
 
   ctx.body = {
-    code: 0,
+    code: 301,
     msg: 'account or password error!'
   }
 }
@@ -71,7 +64,6 @@ const login = async (ctx, next) => {
 // 注册
 const register = async (ctx, next) => {
   const req = ctx.request.body;
-    console.log(req,'req')
   // 获取用户的 userId
   const user = await User_col.findOne({
     userName: req.userName
@@ -88,22 +80,13 @@ const register = async (ctx, next) => {
   
   // 插入新用户
   const userId = uuidV1();
-  console.log(userId,'id')
   const newUser = await User_col.create({
     userId,
     userName: req.userName,
-    password: req.password
+    password: passport.cryptoPwd(req.password) //密码加盐加密
   });
 
   if (newUser) {
-    // 加密
-    // const hash = await passport.encrypt(req.password, config.saltTimes);
-    // const result = await Passport_col.create({
-    //   userId: userId,
-    //   hash
-    // })
-
-    // if (result) {
       ctx.body = {
         code: 1,
         msg: '注册成功！',
@@ -119,7 +102,6 @@ const register = async (ctx, next) => {
     };
   }
 }
-
 
 
 module.exports = {
