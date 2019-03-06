@@ -34,7 +34,11 @@ router.post('/article/articleDel', article_controller.articleDel);
 router.post('/article/uploadCover', upload.single('file'), article_controller.uploadCover);
 router.post('/article/markdownImg', upload.single('file'), article_controller.markdownImg);
 router.post('/article/articleDraft', article_controller.articleDraft);
+//点赞
 router.post('/article/giveLike', article_controller.giveLike);
+//评论
+router.post('/article/comment', article_controller.comment);
+router.post('/article/subComment', article_controller.subComment);
 
 
 

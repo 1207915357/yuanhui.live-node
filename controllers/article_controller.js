@@ -11,6 +11,7 @@
 const Article_col = require('../model/article');
 const ArticleDraft_col = require('../model/article-draft');
 const User_col = require('../model/user');
+const Comment_col = require('../model/comments.js');
 const uuidV1 = require('uuid/v1')
 
 
@@ -18,9 +19,9 @@ const uuidV1 = require('uuid/v1')
 //发布文章
 const publish = async (ctx, next) => {
     const req = ctx.request.body
-    const id = uuidV1();
+    const articleId = uuidV1();
     const newArticle = await Article_col.create({
-        id,
+        articleId,
         value: req.value,
         title: req.title,
         pictureUrl: req.pictureUrl
@@ -127,7 +128,7 @@ const updateArticle = async (ctx, next) => {
         pictureUrl,
         title
     } = ctx.request.body
-    const article = await Article_col.findOneAndUpdate(
+    const article = await Article_col.updateOne(
         {
             id
         }, 
@@ -187,7 +188,7 @@ const articleDraft = async(ctx,next) =>{
     try {
         if(id){
             //更新
-             newArticle = await ArticleDraft_col.findOneAndUpdate(
+             newArticle = await ArticleDraft_col.updateOne(
                 {
                     id
                 },
@@ -238,106 +239,223 @@ const giveLike = async (ctx, next) => {
         }
         return
     }
+    try {
+         var user = await User_col.findOne({
+             userId
+         })
+         var article = await Article_col.findOne({
+             articleId
+         })
+         // var {user, article} = await Promise.all(
+         //     User_col.findOne({id: userId}),
+         //     Article_col.findOne({id: articleId})
+         // )
+         if (user) {
+             let index = user.likeArticle.findIndex((val) => {
+                 return val === articleId
+             })
+             let likeArticle = [],
+                 like = ""
+             if (index === -1) {
+                 likeArticle = user.likeArticle
+                 like = article.like + 1
+                 likeArticle.push(articleId)
+             } else {
+                 likeArticle = user.likeArticle
+                 like = article.like - 1
+                 likeArticle.splice(index, 1)
+             }
+             await User_col.updateOne({
+                 userId
+             }, {
+                 likeArticle
+             })
+             await Article_col.updateOne({
+                 articleId
+             }, {
+                 like
+             })
+             ctx.body = {
+                 code: 1,
+                 msg: 'success!',
+                 data: null
+             }
 
-    var user = await User_col.findOne({userId})
-    var article = await Article_col.findOne({id:articleId})
-    // var {user, article} = await Promise.all(
-    //     User_col.findOne({id: userId}),
-    //     Article_col.findOne({id: articleId})
-    // )
-    if(user){
-        let index =  user.likeArticle.findIndex((val)=>{return val===articleId})
-        let likeArticle=[],like=""
-        if(index === -1){
-            likeArticle = user.likeArticle
-            like = article.like+1
-            likeArticle.push(articleId)
-        }else{
-            likeArticle = user.likeArticle
-            like = article.like - 1
-            likeArticle.splice(index, 1)
-        }
-        await User_col.findOneAndUpdate({
-              userId
-          }, {
-              likeArticle
-          })
-        await Article_col.findOneAndUpdate({
-              id: articleId
-          }, {
-              like
-          })
-          ctx.body = {
-              code: 1,
-              msg: 'success!',
-              data: null
-          }
-       
-    }else{
-        ctx.body = {
-            code: 0,
-            msg: 'failed!',
-        }
+         } else {
+             ctx.body = {
+                 code: 0,
+                 msg: 'failed!',
+             }
+         }
+    } catch (e) {
+        console.log(e,'error')
+         ctx.body = {
+             code: 200,
+             msg: 'server error!',
+         }
     }
+   
 }
 
 
-
-
-
-
-
-// 收藏
-const collectCourse = async (ctx, next) => {
-    const req = ctx.request.body;
-    const userId = req.userId;
-    const courseId = req.courseId;
-
-    if (!userId || !courseId) {
-        ctx.status = 200;
+//文章评论
+const comment = async (ctx, nest) =>{
+    const {
+        userId,
+        articleId,
+        content,
+    } = ctx.request.body
+    if(!userId||!articleId||!content){
         ctx.body = {
-            code: 0,
-            msg: '收藏成功！'
+            code:0,
+            msg:'缺少必要参数！'
         }
-        return;
+       return 
     }
 
-    const result = await User_col.findOne({
-        userId
-    }, {
-        collections: 1,
-        _id: 0
-    });
+    try{
+         const user = await User_col.findOne({
+             userId
+         })
+         const commentId = uuidV1();
+         await Comment_col.create({
+             commentId,
+             articleId,
+             userId,
+             //评论的用户
+             user: {
+                 userId: user.userId,
+                 userName: user.userName,
+             },
+             content,
+             //子评论
+             sub_comment: [],
+         })
+         const commentList = await Comment_col.find({
+             articleId
+         })
+         const result = await Article_col.findOne({articleId})
+         let comments = result.comments
+         comments = comments + 1 
+         const article = await Article_col.updateOne({
+            articleId
+         }, {
+             commentList:commentList.reverse(),
+             comments
+         })
 
-    const collections = result.collections;
+         if (article) {
+             ctx.body = {
+                 code: 1,
+                 msg: 'success',
+                 data: null
+             }
+         } else {
+             ctx.body = {
+                 code: 0,
+                 msg: 'failed',
+             }
+         }
 
-    ctx.status = 200;
-    if (collections.includes(courseId)) {
+    }catch(e){
+        console.log(e,'error')
         ctx.body = {
-            code: 1,
-            msg: '已收藏该课程！'
+            code: 200,
+            msg: '服务器错误',
         }
-        return;
     }
 
-    collections.push(courseId);
-
-    await User_col.update({
-        userId: req.userId
-    }, {
-        $set: {
-            collections,
-        }
-    });
-
-    ctx.body = {
-        code: 1,
-        msg: '收藏成功！'
-    }
 }
 
 
+//子评论
+const subComment = async (ctx, nest) => {
+    const {
+        userId,
+        toUserId,
+        articleId,
+        commentId,
+        content,
+    } = ctx.request.body
+    if (!userId || !toUserId || !articleId || !commentId || !content) {
+        ctx.body = {
+            code: 0,
+            msg: '缺少必要参数！'
+        }
+        return
+    }
 
+    try {
+        const user = await User_col.findOne({
+            userId
+        })
+        const toUser = await User_col.findOne({
+            userId:toUserId
+        })
+        const result_comment = await Comment_col.findOne({
+            commentId
+        })
+        let sub_comment = result_comment.sub_comment
+        sub_comment.push(
+            {
+                user: {
+                    userId: user.userId,
+                    userName: user.userName,
+                },
+                toUser: {
+                    userId: toUser.userId,
+                    userName: toUser.userName,
+                },
+                content
+            }
+        ) 
+        await Comment_col.updateOne(
+            {
+                commentId
+            },
+            {
+                sub_comment
+            })
+
+
+        const commentList = await Comment_col.find({
+            articleId
+        })
+        const result_article = await Article_col.findOne({
+            articleId
+        })
+        let comments = result_article.comments
+        comments = comments + 1
+        const article = await Article_col.updateOne({
+            articleId
+        }, {
+            commentList: commentList.reverse(),
+            comments
+        })
+
+
+        if (article) {
+            ctx.body = {
+                code: 1,
+                msg: 'success',
+                data: null
+            }
+        } else {
+            ctx.body = {
+                code: 0,
+                msg: 'failed',
+            }
+        }
+
+    } catch (e) {
+        console.log(e, 'error')
+        ctx.body = {
+            code: 200,
+            msg: '服务器错误',
+        }
+    }
+
+}
 
 
 module.exports = {
@@ -350,4 +468,6 @@ module.exports = {
     markdownImg,
     articleDraft, //草稿保存
     giveLike,
+    comment,
+    subComment,
 }

@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const articleSchema = new Schema({
-    id:{
+    articleId:{
     	type: String,
     	required: true
     },
@@ -32,6 +32,9 @@ const articleSchema = new Schema({
     comments: {
         type: Number,
         default: 0
+    },
+    commentList: {
+        type: Array,
     },
 
 })
