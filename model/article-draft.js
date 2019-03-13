@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const articleDraftSchema = new Schema({
-    id: {
+    articleId: {
         type: String,
         required: true
     },
@@ -16,6 +16,9 @@ const articleDraftSchema = new Schema({
     },
     pictureUrl: {
         type: String
+    },
+    tags: {
+        type: Array,
     },
     created_time: {
         type: Date,

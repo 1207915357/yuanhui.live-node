@@ -12,40 +12,94 @@ const Article_col = require('../model/article');
 const ArticleDraft_col = require('../model/article-draft');
 const User_col = require('../model/user');
 const Comment_col = require('../model/comments.js');
+const Tag_col = require('../model/tag.js');
 const uuidV1 = require('uuid/v1')
 
 
 //文章操作--------------------------------------------------------------
 //发布文章
 const publish = async (ctx, next) => {
-    const req = ctx.request.body
-    const articleId = uuidV1();
-    const newArticle = await Article_col.create({
-        articleId,
-        value: req.value,
-        title: req.title,
-        pictureUrl: req.pictureUrl
-    })
+    const {
+        value,
+        title,
+        pictureUrl,
+        tags
+    } = ctx.request.body
 
-    if (newArticle) {
-        ctx.body = {
-            code: 1,
-            msg: 'success!',
-            data: {}
-        };
-    } else {
-        ctx.body = {
-            code: 0,
-            msg: 'failed!'
-        };
+    try {
+          const tagList = await Tag_col.find()
+          for (let ele of tags) {
+              const flag = tagList.find((obj) => {
+                  return obj.tagName == ele
+              })
+            //   console.log(flag, 'flag')
+              if (flag) {
+                  let theTag = await Tag_col.findOne({
+                      tagName: ele
+                  })
+                  let count = theTag.count
+                  count++
+                  await Tag_col.update({
+                      tagName: ele
+                  }, {
+                      count
+                  })
+              } else {
+                  await Tag_col.create({
+                      tagName: ele
+                  })
+              }
+          }
+
+          const articleId = uuidV1();
+          const newArticle = await Article_col.create({
+              articleId,
+              value,
+              title,
+              pictureUrl,
+              tags
+          })
+
+          if (newArticle) {
+              ctx.body = {
+                  code: 1,
+                  msg: 'success!',
+                  data: {}
+              };
+          } else {
+              ctx.body = {
+                  code: 0,
+                  msg: 'failed!'
+              };
+          }
+        
+    } catch (error) {
+        console.log(error)
+         ctx.body = {
+             code: 0,
+             data: error,
+             msg: 'failed!'
+         };
     }
+
+  
 }
 
 //获取文章列表||草稿列表 
 const articleList = async (ctx, next) =>{
     const type = ctx.request.body.type
+    
     if(type === 'article'){
-        var articleList = await Article_col.find()
+        if (ctx.request.body.tagName) {
+            const tagName = ctx.request.body.tagName
+            var articleList = await Article_col.find({
+                tags: {
+                    $all: [tagName]
+                }
+            })
+        }else{
+            var articleList = await Article_col.find()
+        }
     }else{
         var articleList = await ArticleDraft_col.find()
     }
@@ -95,15 +149,15 @@ const markdownImg = async (ctx, next) => {
 
 //查看文章详情||草稿详情
 const articleDel = async (ctx, next) => {
-    const {id,type} = ctx.request.body
+    const {articleId,type} = ctx.request.body
     let articleDel = ""
     if(type==="article"){
         articleDel = await Article_col.findOne({
-            id
+            articleId
         })
     }else{
         articleDel = await ArticleDraft_col.findOne({
-            id
+            articleId
         })
     }
     if (articleDel) {
@@ -123,14 +177,14 @@ const articleDel = async (ctx, next) => {
 //编辑更新文章
 const updateArticle = async (ctx, next) => {
     const {
-        id,
+        articleId,
         value,
         pictureUrl,
         title
     } = ctx.request.body
     const article = await Article_col.updateOne(
         {
-            id
+            articleId
         }, 
         {
             value,
@@ -156,41 +210,85 @@ const updateArticle = async (ctx, next) => {
 }
 //删除文章||草稿
 const deleteArticle = async (ctx, next) => {
-    const {id,type} = ctx.request.body
-    let article = ""
-    if(type==="article"){
-         article = await Article_col.deleteOne({
-            id: id
-        })
-    }else{
-        article = await ArticleDraft_col.deleteOne({
-            id: id
-        })
-    }
-    if (article) {
+    try {
+         const {
+             articleId,
+             type
+         } = ctx.request.body
+         let article = ""
+         if (type === "article") {
+
+             const theArticle = await Article_col.findOne({
+                 articleId
+             })
+             const tags = theArticle.tags
+            //  console.log(tags, 'tags')
+             for (let ele of tags) {
+                 let theTag = await Tag_col.findOne({
+                     tagName: ele
+                 })
+                //  console.log(theTag, 'theTag')
+                 let count = theTag.count
+                 count--
+                 if (count == 0) {
+                     await Tag_col.deleteOne({
+                         tagName: ele
+                     })
+                 } else {
+                     await Tag_col.update({
+                         tagName: ele
+                     }, {
+                         count
+                     })
+                 }
+             }
+
+             article = await Article_col.deleteOne({
+                 articleId
+             })
+         } else {
+             article = await ArticleDraft_col.deleteOne({
+                 articleId
+             })
+         }
+         if (article) {
+             ctx.body = {
+                 code: 1,
+                 msg: 'success!',
+             }
+         } else {
+             ctx.body = {
+                 code: 0,
+                 msg: 'failed!'
+             }
+         }
+    } catch (error) {
+        console.log(error,'error')
         ctx.body = {
-            code: 1,
-            msg: 'success!',
-        }
-    } else {
-        ctx.body = {
-            code: 0,
-            msg: 'failed!'
+            code: 500,
+            msg:'server error!'
         }
     }
+   
 }
 
 
 //保存为草稿
 const articleDraft = async(ctx,next) =>{
-    const {id,value,title,pictureUrl} = ctx.request.body
+    const {
+        articleId,
+        value,
+        title,
+        pictureUrl
+    } = ctx.request.body
     let newArticle = ""
     try {
-        if(id){
+        if (articleId) {
             //更新
+            // console.log(articleId,'id')
              newArticle = await ArticleDraft_col.updateOne(
                 {
-                    id
+                    articleId
                 },
                 {
                     value,
@@ -200,9 +298,9 @@ const articleDraft = async(ctx,next) =>{
             )
         }else{
             //保存
-            const id = uuidV1();
+            const articleId = uuidV1();
             newArticle = await ArticleDraft_col.create({
-                id,
+                articleId,
                 value,
                 title,
                 pictureUrl
@@ -211,6 +309,7 @@ const articleDraft = async(ctx,next) =>{
     }catch (e) {
         console.log(e, 'error')
     }
+    // console.log(newArticle,'new')
     if (newArticle) {
         ctx.body = {
             code: 1,

@@ -17,6 +17,10 @@ const articleSchema = new Schema({
     pictureUrl: {
         type: String
     },
+    tags: {
+        type: Array,
+        required: true
+    },
     created_time: {
         type: Date,
         default: Date.now
@@ -36,6 +40,7 @@ const articleSchema = new Schema({
     commentList: {
         type: Array,
     },
+    
 
 })
 
