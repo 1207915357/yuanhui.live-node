@@ -152,9 +152,19 @@ const articleDel = async (ctx, next) => {
     const {articleId,type} = ctx.request.body
     let articleDel = ""
     if(type==="article"){
+       let article = await Article_col.findOne({
+            articleId
+        })
+        let eye = article.eye
+        eye ++
+        await Article_col.updateOne(
+            {articleId},
+            {eye}
+        )
         articleDel = await Article_col.findOne({
             articleId
         })
+
     }else{
         articleDel = await ArticleDraft_col.findOne({
             articleId
