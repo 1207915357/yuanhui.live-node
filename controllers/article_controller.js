@@ -9,7 +9,7 @@
 
 
 const Article_col = require('../model/article');
-const ArticleDraft_col = require('../model/article-draft');
+const ArticleDraft_col = require('../model/article-draft'); 
 const User_col = require('../model/user');
 const Comment_col = require('../model/comments.js');
 const Tag_col = require('../model/tag.js');
@@ -88,26 +88,33 @@ const publish = async (ctx, next) => {
 //获取文章列表||草稿列表 
 const articleList = async (ctx, next) =>{
     const type = ctx.request.body.type
+    const tagName = ctx.request.body.tagName || undefined
+    const rows = parseInt(ctx.request.body.rows) || 10
+    const start = parseInt(ctx.request.body.start) || 0
     
     if(type === 'article'){
-        if (ctx.request.body.tagName) {
-            const tagName = ctx.request.body.tagName
+        if (tagName) {
+            // const tagName = ctx.request.body.tagName
             var articleList = await Article_col.find({
-                tags: {
-                    $all: [tagName]
-                }
+                tags: {$all: [tagName]}
             })
+            .sort({ '_id': -1})
         }else{
             var articleList = await Article_col.find()
+            .skip(start)
+            .limit(rows)
+            .sort({'_id': -1 })
+
         }
     }else{
         var articleList = await ArticleDraft_col.find()
+        .sort({'_id': -1})
     }
      if (articleList) {
          ctx.body = {
              code: 1,
              msg: 'success!',
-             data: [...articleList.reverse()]
+             data: [...articleList]
          };
      } else {
          console.log(articleList, 'error')
@@ -442,6 +449,8 @@ const comment = async (ctx, nest) =>{
          })
          const commentList = await Comment_col.find({
              articleId
+         }).sort({
+             '_id': -1
          })
          const result = await Article_col.findOne({articleId})
          let comments = result.comments
@@ -449,7 +458,7 @@ const comment = async (ctx, nest) =>{
          const article = await Article_col.updateOne({
             articleId
          }, {
-             commentList:commentList.reverse(),
+             commentList,
              comments
          })
 
@@ -529,6 +538,8 @@ const subComment = async (ctx, nest) => {
 
         const commentList = await Comment_col.find({
             articleId
+        }).sort({
+            '_id': -1
         })
         const result_article = await Article_col.findOne({
             articleId
@@ -538,7 +549,7 @@ const subComment = async (ctx, nest) => {
         const article = await Article_col.updateOne({
             articleId
         }, {
-            commentList: commentList.reverse(),
+            commentList,
             comments
         })
 
