@@ -28,6 +28,7 @@ var upload = multer({
 
 router.post('/article/publish', article_controller.publish);
 router.post('/article/articleList', article_controller.articleList);
+router.post('/article/searchArticle', article_controller.searchArticle);
 router.post('/article/updateArticle', article_controller.updateArticle);
 router.post('/article/deleteArticle', article_controller.deleteArticle);
 router.post('/article/articleDel', article_controller.articleDel);

@@ -125,6 +125,49 @@ const articleList = async (ctx, next) =>{
      }
 }
 
+//搜索文章
+const searchArticle = async (ctx,next) =>{
+    const keyWord = ctx.request.body.keyWord
+    let list 
+    if(keyWord == "hottest"){
+         list = await Article_col
+             .find()
+             .sort({
+                 eye : -1
+             })
+    }else if(keyWord == "newest"){
+         list = await Article_col
+             .find()
+             .sort({
+                 '_id': -1
+             })
+    }else{
+        list = await Article_col
+            .find({
+                title: {
+                    $regex: keyWord
+                }
+            })
+            .sort({
+                '_id': -1
+            })
+    }
+
+    if(list){
+        ctx.body = {
+            code: 1,
+            data:[...list],
+            meg:'success'
+        }
+    }else{
+         console.log(list, 'error')
+         ctx.body = {
+             code: 0,
+             msg: 'failed!'
+         };
+    }
+}
+
 //封面图片上传
 const uploadCover = async(ctx, next)=>{
      let pictureUrl = `http://${ctx.req.headers.host}/imgs/${ctx.req.file.filename}`
@@ -581,6 +624,7 @@ const subComment = async (ctx, nest) => {
 module.exports = {
     publish,
     articleList,
+    searchArticle,
     updateArticle,
     deleteArticle,
     articleDel,
