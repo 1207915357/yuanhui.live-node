@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
-
+//文章评论表
 const commentsSchema = new Schema({
     commentId: {
         type: String,
@@ -17,9 +17,7 @@ const commentsSchema = new Schema({
     //评论的用户
     user: {  
         userId:{type:String},
-        userName: {
-            type: String
-        },
+        userName: {type: String},
         type:{type:Number, default:1}, // 0作者|| 1用户,
         avatar:{type:String, default:'user'}
     },
@@ -41,21 +39,10 @@ const commentsSchema = new Schema({
            avatar: {type: String,default: 'user'}
        },
        toUser: {
-           userId: {
-               type: String
-           },
-           userName: {
-               type: String,
-               default: ""
-           },
-           type: {
-               type: Number,
-               default: 1
-           }, // 0作者|| 1用户,
-           avatar: {
-               type: String,
-               default: 'user'
-           }
+           userId: {type: String},
+           userName: {type: String,default: ""},
+           type: {type: Number,default: 1}, // 0作者|| 1用户,
+           avatar: {type: String,default: 'user'}
        },
         content: {
                type: String,

@@ -4,6 +4,7 @@ const bodyParser = require('koa-bodyparser');
 const koaStatic = require('koa-static');
 const mongoose = require('mongoose');
 const config = require('./config.js');
+const http = require('http')
 
 const user_router = require('./api/user-router.js');
 const article_router = require('./api/article-router.js');
@@ -20,7 +21,7 @@ mongoose.connect(config.db, {useNewUrlParser:true}, (err) => {
 });
 
 
-app
+const server =  app
 //跨域
 .use(cors())
 //开放静态资源
@@ -36,3 +37,27 @@ app
 .listen(config.port,function(){
     console.log(`server is running ${config.port}`)
 });
+
+// const server = http.createServer(app)
+
+const io = require('socket.io')(server);
+io
+// .of('/notice')
+.clients((error, clients) => {
+    if (error) throw error;
+    console.log(clients, 'client'); // => [Anw2LatarvGVVXEIAAAD]
+})
+.on('connection', function (socket) {
+    const socketId = socket.id
+    //登录时建立一个userName 到 socketId 的映射表
+    // socket.broadcast.emit('user connected');
+    socket.on('login',(userName) =>{})
+
+    socket.emit('news', {
+        news: 'new comment'
+    });
+    socket.on('clientEvent', function (data) {
+        console.log(data);
+    });
+})
+

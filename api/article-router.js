@@ -40,6 +40,10 @@ router.post('/article/giveLike', article_controller.giveLike);
 //评论
 router.post('/article/comment', article_controller.comment);
 router.post('/article/subComment', article_controller.subComment);
+//通知
+router.post('/article/getNotice', article_controller.getNotice);
+router.post('/article/readedNotice', article_controller.readedNotice);
+router.post('/article/clearNotice', article_controller.clearNotice);
 
 
 
