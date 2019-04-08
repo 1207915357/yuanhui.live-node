@@ -32,24 +32,24 @@ const userSchema = new Schema({
 		default: 0,
 		required: true
 	},
-	readed: { //是否查看未读通知
-		type: Boolean,
-		default: true
-	},
-	// 评论通知
+	// readed: { //是否查看未读通知
+	// 	type: Boolean,
+	// 	default: true
+	// },
+	// 通知
 	commentNotice: [
 		{
 			type:{
-				type:String, // comment 评论文章 || answer 回复评论
+				type:String, // comment 评论文章 || answer 回复评论 || notice 通知
 				required:true
 			},
 			articleId:{
 				type:String,
-				required:true
+				// required:true
 			},
 			articleTitle:{
 				type:String,
-				required:true
+				// required:true
 			},
 			content: {
 				type: String,

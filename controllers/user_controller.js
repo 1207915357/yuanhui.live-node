@@ -77,13 +77,30 @@ const register = async (ctx, next) => {
     }
     return;
   }
-  
+  const allUser = await User_col.find()
+  const userNum = allUser.length
   // 插入新用户
   const userId = uuidV1();
   const newUser = await User_col.create({
     userId,
     userName: req.userName,
-    password: passport.cryptoPwd(req.password) //密码加盐加密
+    password: passport.cryptoPwd(req.password), //密码加盐加密
+    unreadNum: 1,
+    commentNotice:[
+      {
+        type:'notice',
+        content: `欢迎访问博客(yuanhui.live)，你是本站的第${userNum+1}位用户!`,
+        user:{
+          userName:'yh',
+          type: 0
+        },
+        toUser:{
+          userName:req.userName,
+          userId
+        }
+
+      }
+    ]
   });
 
   if (newUser) {

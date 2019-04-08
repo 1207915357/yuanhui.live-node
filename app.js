@@ -9,6 +9,7 @@ const http = require('http')
 const user_router = require('./api/user-router.js');
 const article_router = require('./api/article-router.js');
 const tag_router = require('./api/tag-router.js');
+const notice_router = require('./api/notice-router.js');    
 
 const app = new Koa();
 
@@ -21,7 +22,8 @@ mongoose.connect(config.db, {useNewUrlParser:true}, (err) => {
 });
 
 
-const server =  app
+const server =  
+app
 //跨域
 .use(cors())
 //开放静态资源
@@ -32,6 +34,7 @@ const server =  app
 .use(user_router.routes()).use(user_router.allowedMethods())
 .use(article_router.routes()).use(article_router.allowedMethods())
 .use(tag_router.routes()).use(tag_router.allowedMethods())
+.use(notice_router.routes()).use(notice_router.allowedMethods())
 
 //启动服务监听端口
 .listen(config.port,function(){

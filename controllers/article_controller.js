@@ -64,7 +64,10 @@ const publish = async (ctx, next) => {
               ctx.body = {
                   code: 1,
                   msg: 'success!',
-                  data: {}
+                  data: {
+                      title,
+                      articleId
+                  }
               };
           } else {
               ctx.body = {
@@ -464,7 +467,6 @@ const comment = async (ctx, nest) =>{
         userId,
         articleId,
         content,
-        author
     } = ctx.request.body
     if(!userId||!articleId||!content){
         ctx.body = {
@@ -508,28 +510,6 @@ const comment = async (ctx, nest) =>{
              comments
          })
 
-         //通知作者
-        const authorInfo =  await User_col.findOne({userId:author.userId})
-        let noticeObj = {
-            content,
-            user:theUser,
-            toUser:author,
-            type: 'comment',
-            articleId,
-            articleTitle: theArticle.title
-        }
-        let commentNotice = authorInfo.commentNotice
-        let unreadNum = authorInfo.unreadNum
-        commentNotice.push(noticeObj)
-        unreadNum++
-        let updateAuthor = await User_col.updateOne(
-            {userId:author.userId},
-            {
-                commentNotice,
-                unreadNum,
-            })
-
-
          if (article) {
              ctx.body = {
                  code: 1,
@@ -561,7 +541,6 @@ const subComment = async (ctx, nest) => {
         toUserId,
         articleId,
         commentId,
-        toContent,
         content,
     } = ctx.request.body
     if (!userId || !toUserId || !articleId || !commentId || !content) {
@@ -571,7 +550,6 @@ const subComment = async (ctx, nest) => {
         }
         return
     }
-
     try {
         const user = await User_col.findOne({
             userId
@@ -606,7 +584,6 @@ const subComment = async (ctx, nest) => {
                 sub_comment
             })
 
-
         const commentList = await Comment_col.find({
             articleId
         }).sort({
@@ -623,31 +600,6 @@ const subComment = async (ctx, nest) => {
             commentList,
             comments
         })
-        
-        //通知评论用户
-        // const theToUserInfo = await User_col.findOne({
-        //     userId: theToUser.userId
-        // })
-        let noticeObj = {
-            toContent,
-            content,
-            user: theUser,
-            toUser: theToUser,
-            type: 'answer',
-            articleId,
-            articleTitle: theArticle.title
-        }
-        let commentNotice = toUser.commentNotice
-        let unreadNum = toUser.unreadNum
-        commentNotice.push(noticeObj)
-        unreadNum++
-        let updateToUser = await User_col.updateOne({
-            userId: toUserId
-        }, {
-            commentNotice,
-            unreadNum,
-        })
-
 
         if (article) {
             ctx.body = {
@@ -672,74 +624,6 @@ const subComment = async (ctx, nest) => {
 
 }
 
-//消息通知
-const getNotice = async (ctx,nest) =>{
-    const userId = ctx.request.body.userId
-    const user = await User_col.findOne({userId})
-    if(user){
-        ctx.body = {
-            code: 1,
-            msg: 'success',
-            data:{  
-                commentNotice:user.commentNotice.reverse(),
-                unreadNum:user.unreadNum,
-            }
-        }
-    }else{
-         console.log(user, 'error')
-         ctx.body = {
-                 code: 200,
-                 msg: '服务器错误',
-        }
-    
-    }
-}
-
-//消息已读
- const readedNotice = async (ctx,nest)=>{
-    const userId = ctx.request.body.userId
-    const user = await User_col.updateOne({
-        userId
-    },{
-        unreadNum: 0
-    })
-    if (user) {
-        ctx.body = {
-            code: 1,
-            msg: 'success',
-            data: {}
-        }
-    } else {
-        console.log(user, 'error')
-        ctx.body = {
-            code: 200,
-            msg: '服务器错误',
-        }
-    }
- }
-
- //清除消息
- const clearNotice = async (ctx, nest) => {
-     const userId = ctx.request.body.userId
-     const user = await User_col.updateOne({
-         userId
-     }, {
-         commentNotice: []
-     })
-     if (user) {
-         ctx.body = {
-             code: 1,
-             msg: 'success',
-             data: {}
-         }
-     } else {
-         console.log(user, 'error')
-         ctx.body = {
-             code: 200,
-             msg: '服务器错误',
-         }
-     }
- }
 
 module.exports = {
     publish,
@@ -754,7 +638,4 @@ module.exports = {
     giveLike,
     comment,
     subComment,
-    getNotice,
-    readedNotice,
-    clearNotice
 }
