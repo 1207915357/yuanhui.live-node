@@ -23,27 +23,26 @@ const publish = async (ctx, next) => {
         value,
         title,
         pictureUrl,
-        tags
+        tags,
+        authorId
     } = ctx.request.body
 
     try {
+          const authorInfo = await User_col.findOne({userId:authorId})
+          let author = {
+              userId: authorInfo.userId,
+              userName: authorInfo.userName
+          }
           const tagList = await Tag_col.find()
           for (let ele of tags) {
               const flag = tagList.find((obj) => {
                   return obj.tagName == ele
               })
-            //   console.log(flag, 'flag')
               if (flag) {
-                  let theTag = await Tag_col.findOne({
-                      tagName: ele
-                  })
-                  let count = theTag.count
-                  count++
-                  await Tag_col.updateOne({
-                      tagName: ele
-                  }, {
-                      count
-                  })
+                await Tag_col.updateOne(
+                    {tagName:ele},
+                    {$inc:{count:1}}
+                )
               } else {
                   await Tag_col.create({
                       tagName: ele
@@ -57,7 +56,8 @@ const publish = async (ctx, next) => {
               value,
               title,
               pictureUrl,
-              tags
+              tags,
+              author
           })
 
           if (newArticle) {
@@ -138,6 +138,8 @@ const searchArticle = async (ctx,next) =>{
              .sort({
                  eye : -1
              })
+             .skip(0)
+             .limit(6)
     }else if(keyWord == "newest"){
          list = await Article_col
              .find()
@@ -205,14 +207,9 @@ const articleDel = async (ctx, next) => {
     const {articleId,type} = ctx.request.body
     let articleDel = ""
     if(type==="article"){
-       let article = await Article_col.findOne({
-            articleId
-        })
-        let eye = article.eye
-        eye ++
         await Article_col.updateOne(
             {articleId},
-            {eye}
+            {$inc:{eye:1}}
         )
         articleDel = await Article_col.findOne({
             articleId
@@ -231,8 +228,8 @@ const articleDel = async (ctx, next) => {
         };
     } else {
         ctx.body = {
-            code: 0,
-            msg: 'failed!'
+            code: 200,
+            msg: '文章已被删除!'
         };
     }
 }
@@ -286,12 +283,10 @@ const deleteArticle = async (ctx, next) => {
                  articleId
              })
              const tags = theArticle.tags
-            //  console.log(tags, 'tags')
              for (let ele of tags) {
                  let theTag = await Tag_col.findOne({
                      tagName: ele
                  })
-                //  console.log(theTag, 'theTag')
                  let count = theTag.count
                  count--
                  if (count == 0) {
@@ -589,16 +584,11 @@ const subComment = async (ctx, nest) => {
         }).sort({
             '_id': -1
         })
-        const theArticle = await Article_col.findOne({
-            articleId
-        })
-        let comments = theArticle.comments
-        comments = comments + 1
         const article = await Article_col.updateOne({
             articleId
         }, {
             commentList,
-            comments
+            $inc:{comments:1}
         })
 
         if (article) {

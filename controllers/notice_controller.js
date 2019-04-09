@@ -4,7 +4,6 @@ const User_col = require('../model/user');
 //通知全体(除自己)
 const noticeAllUser = async (ctx, nest) => {
     const {
-        // type, 
         userId,
         content,
         articleId,
@@ -19,9 +18,6 @@ const noticeAllUser = async (ctx, nest) => {
     const userInfo = await User_col.findOne({
         userId: userId
     })
-    // const articleInfo = await Article_col.findOne({
-    //     articleId
-    // })
     let noticeObj = {
         type:'notice',
         user: {
@@ -30,44 +26,32 @@ const noticeAllUser = async (ctx, nest) => {
         },
         content,
         articleId,
-        // articleTitle: articleInfo.title,
     }
-
-    const allUser = await User_col.find({userId:{$ne:userId}})
-
-    for(let ele of allUser){
-        let commentNotice = ele.commentNotice
-        let unreadNum = ele.unreadNum
-        unreadNum++
-        commentNotice.push(noticeObj)
-        // ?? 循环更新全部写法
-        await User_col.updateOne({   
-             userId: ele.userId
-         }, {
-             commentNotice,
-             unreadNum,
-         })
-    }
-
-    ctx.body = {
-        code: 1,
-        msg: 'success',
-        data: null
-    }
-
-    // if (updateUserInfo) {
-    //     ctx.body = {
-    //         code: 1,
-    //         msg: 'success',
-    //         data: null
-    //     }
-    // } else {
-    //     ctx.body = {
-    //         code: 0,
-    //         msg: 'failed',
-    //     }
-    // }
+    const updateAllUser = await User_col.updateMany(
+        {userId: {$ne: userId}},
+        {
+            $inc: {
+                unreadNum: 1
+            },
+            $push: {
+                commentNotice: noticeObj
+            }
+        }
+    )
+    if (updateAllUser.ok == 1){
+         ctx.body = {
+             code: 1,
+             msg: 'success',
+             data: null
+         }
+    } else {
+            ctx.body = {
+                code: 0,
+                msg: 'failed',
+            }
+        }
 }
+
 
 //通知用户消息
 const publishNotice = async (ctx, nest) => {
@@ -95,6 +79,7 @@ const publishNotice = async (ctx, nest) => {
      const articleInfo = await Article_col.findOne({
          articleId
      })
+     
      let noticeObj = {
          type,
          user: {
@@ -110,16 +95,20 @@ const publishNotice = async (ctx, nest) => {
          articleId,
          articleTitle: articleInfo.title,
      }
-     let commentNotice = toUserInfo.commentNotice
-     let unreadNum = toUserInfo.unreadNum
-    commentNotice.push(noticeObj)
-    unreadNum++
-     let updateUserInfo = await User_col.updateOne({
-         userId: toUserId
-     }, {
-         commentNotice,
-         unreadNum,
-     })
+     
+      let updateUserInfo = await User_col.updateOne(
+        {
+            userId: toUserId
+        }, 
+        {
+            $push: {
+                commentNotice: noticeObj
+            },
+            $inc:{
+                unreadNum:1
+            },
+        }
+    )
 
      if (updateUserInfo){
          ctx.body = {
