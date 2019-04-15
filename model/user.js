@@ -15,6 +15,11 @@ const userSchema = new Schema({
 		type: String,
 		required: true
 	},
+	type: {
+		type: Number,
+		default: 1
+	}, // 0作者|| 1用户,
+
 	avatar:{
 		type: String,
 		// default: '/public/img/avatar-default.png'

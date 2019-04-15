@@ -204,13 +204,22 @@ const markdownImg = async (ctx, next) => {
 
 //查看文章详情||草稿详情
 const articleDel = async (ctx, next) => {
-    const {articleId,type} = ctx.request.body
+    const {
+        articleId,
+        type,
+        notAddEye
+    } = ctx.request.body
     let articleDel = ""
     if(type==="article"){
-        await Article_col.updateOne(
-            {articleId},
-            {$inc:{eye:1}}
-        )
+        if (!notAddEye) {  // notAddEye为true时不增加查看次数
+            await Article_col.updateOne({
+                articleId
+            }, {
+                $inc: {
+                    eye: 1
+                }
+            })
+        }
         articleDel = await Article_col.findOne({
             articleId
         })
@@ -479,6 +488,7 @@ const comment = async (ctx, nest) =>{
          let theUser = {
              userId: user.userId,
              userName: user.userName,
+             type:user.type
          }
          await Comment_col.create({
              commentId,
@@ -495,14 +505,12 @@ const comment = async (ctx, nest) =>{
          }).sort({
              '_id': -1
          })
-         const theArticle = await Article_col.findOne({articleId})
-         let comments = theArticle.comments
-         comments = comments + 1 
+         
          const article = await Article_col.updateOne({
             articleId
          }, {
              commentList,
-             comments
+             $inc:{comments:1}
          })
 
          if (article) {
@@ -555,10 +563,12 @@ const subComment = async (ctx, nest) => {
          let theUser = {
              userId: user.userId,
              userName: user.userName,
+             type:user.type
          }
           let theToUser = {
               userId: toUser.userId,
               userName: toUser.userName,
+              type: toUser.type
           }
         const result_comment = await Comment_col.findOne({
             commentId

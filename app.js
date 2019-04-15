@@ -41,26 +41,27 @@ app
     console.log(`server is running ${config.port}`)
 });
 
+
+// socket.io
 // const server = http.createServer(app)
+// const io = require('socket.io')(server);
+// io
+// // .of('/notice')
+// .clients((error, clients) => {
+//     if (error) throw error;
+//     console.log(clients, 'client'); // => [Anw2LatarvGVVXEIAAAD]
+// })
+// .on('connection', function (socket) {
+//     const socketId = socket.id
+//     //登录时建立一个userName 到 socketId 的映射表
+//     // socket.broadcast.emit('user connected');
+//     socket.on('login',(userName) =>{})
 
-const io = require('socket.io')(server);
-io
-// .of('/notice')
-.clients((error, clients) => {
-    if (error) throw error;
-    console.log(clients, 'client'); // => [Anw2LatarvGVVXEIAAAD]
-})
-.on('connection', function (socket) {
-    const socketId = socket.id
-    //登录时建立一个userName 到 socketId 的映射表
-    // socket.broadcast.emit('user connected');
-    socket.on('login',(userName) =>{})
-
-    socket.emit('news', {
-        news: 'new comment'
-    });
-    socket.on('clientEvent', function (data) {
-        console.log(data);
-    });
-})
+//     socket.emit('news', {
+//         news: 'new comment'
+//     });
+//     socket.on('clientEvent', function (data) {
+//         console.log(data);
+//     });
+// })
 

@@ -22,7 +22,8 @@ const noticeAllUser = async (ctx, nest) => {
         type:'notice',
         user: {
             userId: userInfo.userId,
-            userName: userInfo.userName
+            userName: userInfo.userName,
+            type: userInfo.type
         },
         content,
         articleId,
@@ -84,11 +85,13 @@ const publishNotice = async (ctx, nest) => {
          type,
          user: {
              userId: userInfo.userId,
-             userName: userInfo.userName
+             userName: userInfo.userName,
+             type:userInfo.type
          },
          toUser: {
              userId: toUserInfo.userId,
-             userName: toUserInfo.userName
+             userName: toUserInfo.userName,
+             type: toUserInfo.type
          },
          content,
          toContent, 
