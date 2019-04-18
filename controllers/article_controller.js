@@ -14,7 +14,7 @@ const User_col = require('../model/user');
 const Comment_col = require('../model/comments.js');
 const Tag_col = require('../model/tag.js');
 const uuidV1 = require('uuid/v1')
-
+const passport = require('../utils/passport')
 
 //文章操作--------------------------------------------------------------
 //发布文章
@@ -467,6 +467,12 @@ const giveLike = async (ctx, next) => {
 
 //文章评论
 const comment = async (ctx, nest) =>{
+    const payload = passport.getJWTPayload(ctx.headers.authorization)
+    if(!payload){
+        console.log('token error !')
+        ctx.status = 403
+        return
+    }
     const {
         userId,
         articleId,

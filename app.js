@@ -25,12 +25,22 @@ mongoose.connect(config.db, {useNewUrlParser:true}, (err) => {
 const server =  
 app
 //跨域
-.use(cors())
+.use(cors({
+     origin: function (ctx) {
+             if (ctx.url === '/test') {
+                 return "*" // 允许来自所有域名请求
+             }
+             return 'http://localhost:8888' // 这样就能只允许 http://localhost:8080 这个域名的请求了
+         },
+         credentials: true,
+         allowMethods: ['GET', 'POST', 'DELETE'],
+         allowedHeaders: [ 'Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+}))
 //开放静态资源
 .use(koaStatic(__dirname + '/public'))
 //请求参数格式化
 .use(bodyParser())
-//路由
+//路由挂载
 .use(user_router.routes()).use(user_router.allowedMethods())
 .use(article_router.routes()).use(article_router.allowedMethods())
 .use(tag_router.routes()).use(tag_router.allowedMethods())

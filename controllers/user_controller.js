@@ -1,4 +1,4 @@
-const config = require('../config');
+// const config = require('../config');
 const User_col = require('../model/user');
 const uuidV1 = require('uuid/v1')
 const passport = require('../utils/passport')
@@ -26,7 +26,6 @@ const post = async (ctx, next) => {
 // 登录
 const login = async (ctx, next) => {
   const req = ctx.request.body;
-
   // 获取用户的 userId
   const user = await User_col.findOne({
     userName: req.userName
@@ -43,13 +42,16 @@ const login = async (ctx, next) => {
   const password = user.password;
   ctx.status = 200;
   if (password === passport.cryptoPwd(req.password)) {
+    const resData = {
+         userId: user.userId,
+        //  userName: user.userName,
+        //  likeArticle: user.likeArticle
+    }
     ctx.body = {
       code: 1,
       msg: 'login success',
       data: {
-          userName:user.userName,
-          userId: user.userId,
-          likeArticle:user.likeArticle
+          token: passport.getToken(resData) 
       }
     }
     return;
@@ -58,6 +60,38 @@ const login = async (ctx, next) => {
   ctx.body = {
     code: 301,
     msg: 'account or password error!'
+  }
+}
+
+//获取用户信息
+const getUserInfo = async(ctx,nest) =>{
+  const token = ctx.headers.authorization
+  const payload = passport.getJWTPayload(token)
+  if (!payload) {
+    console.log('token error !')
+    ctx.status = 403
+    return
+  }
+  const userInfo = await User_col.findOne(
+    {userId:payload.userId},
+    { //限定返回字段
+      password: 0,
+      commentNotice: 0,
+      __v: 0,
+      _id: 0,
+    }
+  )
+  if(userInfo){
+    ctx.body = {
+      msg:'success',
+      code: 1,
+      data: userInfo 
+    }
+  }else{
+    ctx.body = {
+      msg: 'failed',
+      code: 0,
+    }
   }
 }
 
@@ -126,4 +160,5 @@ module.exports = {
   post,
   login,
   register,
+  getUserInfo
 }
