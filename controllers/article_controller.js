@@ -469,7 +469,7 @@ const giveLike = async (ctx, next) => {
 const comment = async (ctx, nest) =>{
     const payload = passport.getJWTPayload(ctx.headers.authorization)
     if(!payload){
-        console.log('token error !')
+        console.log('token error （comment）!')
         ctx.status = 403
         return
     }
@@ -538,6 +538,7 @@ const comment = async (ctx, nest) =>{
             code: 200,
             msg: '服务器错误',
         }
+
     }
 
 }

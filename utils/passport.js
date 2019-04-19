@@ -23,14 +23,14 @@ const getToken = function (payload= {} ) {
 const getJWTPayload = function(token) {
    return jwt.verify(token, config.secret, (error, decoded) => {
         if(error){
-            console.log(error.message)
+            console.log(error.message, 'getJWTPayload')
             return 
         }
         return decoded
     });
 
 
-    
+
 }
 module.exports = {
     cryptoPwd,

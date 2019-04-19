@@ -63,24 +63,24 @@ const login = async (ctx, next) => {
   }
 }
 
-//获取用户信息
+//获取用户信息 
 const getUserInfo = async(ctx,nest) =>{
   const token = ctx.headers.authorization
   const payload = passport.getJWTPayload(token)
   if (!payload) {
-    console.log('token error !')
+    console.log('token error (getUserInfo)!')
     ctx.status = 403
     return
   }
   const userInfo = await User_col.findOne(
     {userId:payload.userId},
-    { //限定返回字段
+    { //不返回字段
       password: 0,
-      commentNotice: 0,
       __v: 0,
       _id: 0,
     }
   )
+  userInfo.commentNotice.reverse()
   if(userInfo){
     ctx.body = {
       msg:'success',
@@ -111,6 +111,7 @@ const register = async (ctx, next) => {
     }
     return;
   }
+  try{
   const allUser = await User_col.find()
   const userNum = allUser.length
   // 插入新用户
@@ -151,6 +152,9 @@ const register = async (ctx, next) => {
       code: 0,
       msg: '注册失败！'
     };
+  }
+  } catch (e) {
+    console.log(e, 'err')
   }
 }
 

@@ -130,25 +130,33 @@ const publishNotice = async (ctx, nest) => {
 //获取通知消息
 const getNotice = async (ctx, nest) => {
     const userId = ctx.request.body.userId
+    if(!userId){
+        ctx.status = 400
+        ctx.body = {
+            code: 0,
+            msg:'缺少必要参数!'
+        }
+        return
+    }
     const user = await User_col.findOne({
         userId
     })
     if (user) {
+        ctx.status = 200
         ctx.body = {
             code: 1,
-            msg: 'success',
+            msg: 'success!',
             data: {
                 commentNotice: user.commentNotice.reverse(),
                 unreadNum: user.unreadNum,
             }
         }
     } else {
-        console.log(user, 'error')
+        ctx.status = 500
         ctx.body = {
             code: 0,
-            msg: 'failed',
+            msg: 'failed!',
         }
-
     }
 }
 
