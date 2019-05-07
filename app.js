@@ -32,10 +32,15 @@ app
              }
              return 'http://localhost:8888' // 这样就能只允许 http://localhost:8080 这个域名的请求了
          },
+         maxAge: 86400, //Access-Control-Max-Age 字段指定了预检请求的结果能够被缓存多久，单位是 秒
          credentials: true,
-         allowMethods: ['GET', 'POST', 'DELETE'],
+         allowMethods: ['GET', 'POST', 'DELETE','PUT'],
          allowedHeaders: [ 'Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
 }))
+.use(async (ctx, next) => {
+    ctx.set('Access-Control-Max-Age', 3600 * 24);
+    await next();
+})
 //开放静态资源
 .use(koaStatic(__dirname + '/public'))
 //请求参数格式化
