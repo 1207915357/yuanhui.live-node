@@ -21,6 +21,10 @@ const articleSchema = new Schema({
         type: Array,
         required: true
     },
+     category: {
+         type: String,
+         required: true
+     },
     created_time: {
         type: Date,
         default: Date.now

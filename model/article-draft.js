@@ -20,6 +20,9 @@ const articleDraftSchema = new Schema({
     tags: {
         type: Array,
     },
+    category: {
+         type: String,
+     },
     created_time: {
         type: Date,
         default: Date.now

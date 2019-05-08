@@ -13,6 +13,7 @@ const ArticleDraft_col = require('../model/article-draft');
 const User_col = require('../model/user');
 const Comment_col = require('../model/comments.js');
 const Tag_col = require('../model/tag.js');
+const Category_col = require('../model/category.js');
 const uuidV1 = require('uuid/v1')
 const passport = require('../utils/passport')
 
@@ -24,6 +25,7 @@ const publish = async (ctx, next) => {
         title,
         pictureUrl,
         tags,
+        category,
         authorId
     } = ctx.request.body
 
@@ -33,48 +35,67 @@ const publish = async (ctx, next) => {
               userId: authorInfo.userId,
               userName: authorInfo.userName
           }
-          const tagList = await Tag_col.find()
-          for (let ele of tags) {
-              const flag = tagList.find((obj) => {
-                  return obj.tagName == ele
-              })
-              if (flag) {
-                await Tag_col.updateOne(
-                    {tagName:ele},
-                    {$inc:{count:1}}
-                )
-              } else {
-                  await Tag_col.create({
-                      tagName: ele
-                  })
-              }
-          }
+        //category
+        const categoryList = await Category_col.find()
+        const temp = categoryList.find((obj) => { return obj.categoryName == category})
+        if (temp) {
+            await Category_col.updateOne({
+                categoryName: category
+            }, {
+                $inc: {
+                    count: 1
+                }
+            })
+        } else {
+            await Category_col.create({
+                categoryName: category
+            })
+        }
 
-          const articleId = uuidV1();
-          const newArticle = await Article_col.create({
-              articleId,
-              value,
-              title,
-              pictureUrl,
-              tags,
-              author
-          })
+        //tag
+        const tagList = await Tag_col.find()
+        for (let ele of tags) {
+            const flag = tagList.find((obj) => {
+                return obj.tagName == ele
+            })
+            if (flag) {
+            await Tag_col.updateOne(
+                {tagName:ele},
+                {$inc:{count:1}}
+            )
+            } else {
+                await Tag_col.create({
+                    tagName: ele
+                })
+            }
+        }
 
-          if (newArticle) {
-              ctx.body = {
-                  code: 1,
-                  msg: 'success!',
-                  data: {
-                      title,
-                      articleId
-                  }
-              };
-          } else {
-              ctx.body = {
-                  code: 0,
-                  msg: 'failed!'
-              };
-          }
+        const articleId = uuidV1();
+        const newArticle = await Article_col.create({
+            articleId,
+            value,
+            title,
+            pictureUrl,
+            tags,
+            category,
+            author
+        })
+
+        if (newArticle) {
+            ctx.body = {
+                code: 1,
+                msg: 'success!',
+                data: {
+                    title,
+                    articleId
+                }
+            };
+        } else {
+            ctx.body = {
+                code: 0,
+                msg: 'failed!'
+            };
+        }
         
     } catch (error) {
         console.log(error)
@@ -92,25 +113,30 @@ const publish = async (ctx, next) => {
 const articleList = async (ctx, next) =>{
     const type = ctx.request.body.type
     const tagName = ctx.request.body.tagName || undefined
+    const categoryName = ctx.request.body.categoryName || undefined
     const rows = parseInt(ctx.request.body.rows) || 10
     const start = parseInt(ctx.request.body.start) || 0
-    
+    let articleList = '';
     if(type === 'article'){
         if (tagName) {
-            // const tagName = ctx.request.body.tagName
-            var articleList = await Article_col.find({
+             articleList = await Article_col.find({
                 tags: {$all: [tagName]}
             })
             .sort({ '_id': -1})
+        }else if(categoryName){
+            articleList = await Article_col.find({
+                    category: {$all: [categoryName]}
+            })
+            .sort({'_id': -1 })
         }else{
-            var articleList = await Article_col.find()
+             articleList = await Article_col.find()
             .skip(start)
             .limit(rows)
             .sort({'_id': -1 })
 
         }
     }else{
-        var articleList = await ArticleDraft_col.find()
+         articleList = await ArticleDraft_col.find()
         .sort({'_id': -1})
     }
      if (articleList) {
@@ -291,6 +317,27 @@ const deleteArticle = async (ctx, next) => {
              const theArticle = await Article_col.findOne({
                  articleId
              })
+             //category
+             const category = theArticle.category
+              if(category){
+                  let theCategory = await Category_col.findOne({
+                      categoryName: category
+                  })
+                  let count_category = theCategory.count
+                  count_category--
+                  if (count_category == 0) {
+                      await Category_col.deleteOne({
+                          categoryName: category
+                      })
+                  } else {
+                      await Category_col.updateOne({
+                          categoryName: category
+                      }, {
+                          count: count_category
+                      })
+                  }
+              }
+             //tags
              const tags = theArticle.tags
              for (let ele of tags) {
                  let theTag = await Tag_col.findOne({
