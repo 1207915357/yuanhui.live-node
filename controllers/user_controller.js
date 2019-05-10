@@ -158,11 +158,28 @@ const register = async (ctx, next) => {
   }
 }
 
+const getAllUser = async(ctx,next)=>{
+  const userList = await User_col.find()
+  if (userList){
+    ctx.body = {
+      code: 1,
+      data:userList,
+      msg:'success!'
+    }
+  }else{
+     ctx.body = {
+       code: 0,
+       msg: 'failed!'
+     }
+  }
+}
+
 
 module.exports = {
   get,
   post,
   login,
   register,
-  getUserInfo
+  getUserInfo,
+  getAllUser
 }

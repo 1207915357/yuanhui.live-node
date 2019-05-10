@@ -37,7 +37,9 @@ const publish = async (ctx, next) => {
           }
         //category
         const categoryList = await Category_col.find()
-        const temp = categoryList.find((obj) => { return obj.categoryName == category})
+        const temp = categoryList.find((obj) => {
+            return obj.categoryName == category
+        })
         if (temp) {
             await Category_col.updateOne({
                 categoryName: category
@@ -56,7 +58,7 @@ const publish = async (ctx, next) => {
         const tagList = await Tag_col.find()
         for (let ele of tags) {
             const flag = tagList.find((obj) => {
-                return obj.tagName == ele
+                return obj.tagName.toLowerCase() == ele.toLowerCase()
             })
             if (flag) {
             await Tag_col.updateOne(

@@ -26,12 +26,13 @@ const server =
 app
 //跨域
 .use(cors({
-     origin: function (ctx) {
-             if (ctx.url === '/test') {
-                 return "*" // 允许来自所有域名请求
-             }
-             return 'http://localhost:8888' // 这样就能只允许 http://localhost:8080 这个域名的请求了
-         },
+    //  origin: function (ctx) {
+    //          if (ctx.url === '/test') {
+    //              return "*" // 允许来自所有域名请求
+    //          }
+    //          return 'http://localhost:8888' // 这样就能只允许 http://localhost:8080 这个域名的请求了
+    //      },
+         origin:'*',
          maxAge: 86400, //Access-Control-Max-Age 字段指定了预检请求的结果能够被缓存多久，单位是 秒
          credentials: true,
          allowMethods: ['GET', 'POST', 'DELETE','PUT'],
