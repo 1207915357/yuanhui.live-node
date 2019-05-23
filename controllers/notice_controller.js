@@ -1,14 +1,17 @@
 const Article_col = require('../model/article');
 const User_col = require('../model/user');
 
-//通知全体(除自己)
-const noticeAllUser = async (ctx, nest) => {
+//通知全体(除自己) || 通知单个用户
+const noticeAllUser = async (ctx, next) => {
     const {
         userId,
         content,
         articleId,
     } = ctx.request.body
-    if (!userId || !content || !articleId) {
+    const toUserId = ctx.request.body.toUserId || ''
+    const type = ctx.request.body.type || 'all'  // all 所有用户 one 单个
+
+    if (!userId || !content ) {
         ctx.body = {
             code: 0,
             msg: '缺少必要参数！'
@@ -28,18 +31,45 @@ const noticeAllUser = async (ctx, nest) => {
         content,
         articleId,
     }
-    const updateAllUser = await User_col.updateMany(
-        {userId: {$ne: userId}},
-        {
+    let updateAllUser = ""
+    if(type=="one"){
+         updateAllUser = await User_col.updateOne({
+            userId: toUserId[0]
+        }, {
             $inc: {
                 unreadNum: 1
             },
             $push: {
                 commentNotice: noticeObj
             }
-        }
-    )
-    if (updateAllUser.ok == 1){
+        })
+    }else if(type=='more'){
+         updateAllUser = await User_col.updateMany({
+             userId: toUserId
+         }, {
+             $inc: {
+                 unreadNum: 1
+             },
+             $push: {
+                 commentNotice: noticeObj
+             }
+         })
+    }else if(type=='all'){
+         updateAllUser = await User_col.updateMany({
+            userId: {
+                $ne: userId
+            }
+        }, {
+            $inc: {
+                unreadNum: 1
+            },
+            $push: {
+                commentNotice: noticeObj
+            }
+        })
+    }
+   
+    if (updateAllUser&&updateAllUser.ok == 1) {
          ctx.body = {
              code: 1,
              msg: 'success',
@@ -54,8 +84,8 @@ const noticeAllUser = async (ctx, nest) => {
 }
 
 
-//通知用户消息
-const publishNotice = async (ctx, nest) => {
+//发布文章通知用户
+const publishNotice = async (ctx, next) => {
     const {
         type,  // comment || answer || notice
         userId,

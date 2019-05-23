@@ -97,10 +97,10 @@ const getUserInfo = async(ctx,nest) =>{
 
 // 注册
 const register = async (ctx, next) => {
-  const req = ctx.request.body;
+  const {userName,email,password} = ctx.request.body;
   // 获取用户的 userId
   const user = await User_col.findOne({
-    userName: req.userName
+    userName
   });
 
   ctx.status = 200;
@@ -118,8 +118,9 @@ const register = async (ctx, next) => {
   const userId = uuidV1();
   const newUser = await User_col.create({
     userId,
-    userName: req.userName,
-    password: passport.cryptoPwd(req.password), //密码加盐加密
+    userName: userName,
+    email: email,
+    password: passport.cryptoPwd(password), //密码加盐加密
     unreadNum: 1,
     commentNotice:[
       {
@@ -130,7 +131,7 @@ const register = async (ctx, next) => {
           type: 0
         },
         toUser:{
-          userName:req.userName,
+          userName:userName,
           userId
         }
 
@@ -154,12 +155,18 @@ const register = async (ctx, next) => {
     };
   }
   } catch (e) {
+    ctx.status = 500
+    ctx.body = {
+       code: 0,
+       msg: '注册失败！'
+     };
     console.log(e, 'err')
   }
 }
 
+//获取所有用户
 const getAllUser = async(ctx,next)=>{
-  const userList = await User_col.find()
+  const userList = await User_col.find().sort({'_id':-1})
   if (userList){
     ctx.body = {
       code: 1,
@@ -174,6 +181,67 @@ const getAllUser = async(ctx,next)=>{
   }
 }
 
+//删除用户
+const deleteUser = async(ctx,next)=> {
+  const userId = ctx.request.body.userId
+  const user = await User_col.deleteOne({userId})
+  if(user){
+    ctx.body = {
+       code: 1,
+        data: user,
+        msg: 'success!'
+    }
+  } else {
+    ctx.body = {
+      code: 0,
+      msg: 'failed!'
+    }
+  }
+}
+
+//更新用户
+const updateUser = async(ctx,next)=>{
+  const {userId,userName,type} = ctx.request.body
+  if(userId&&userName&&type){
+    // const user = await User_col.findOne({
+    //   userName
+    // });
+    // ctx.status = 200;
+    // if (user) {
+    //   ctx.body = {
+    //     code: 300,
+    //     msg: '用户名重复！'
+    //   }
+    //   return;
+    // }
+    const newUser = await User_col.updateOne({
+      userId
+    }, {
+      userName,
+      type
+    })
+
+   if (newUser) {
+     ctx.body = {
+       code: 1,
+       data: null,
+       msg: 'success!'
+     }
+   } else {
+     ctx.body = {
+       code: 0,
+       msg: 'failed!'
+     }
+   }
+  }else{
+     ctx.body = {
+       code: 0,
+       msg: '参数错误!'
+     }
+  }
+  
+
+}
 
 module.exports = {
   get,
@@ -181,5 +249,7 @@ module.exports = {
   login,
   register,
   getUserInfo,
-  getAllUser
+  getAllUser,
+  deleteUser,
+  updateUser
 }
