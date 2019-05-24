@@ -40,6 +40,7 @@ router.post('/article/giveLike', article_controller.giveLike);
 //评论
 router.post('/article/comment', article_controller.comment);
 router.post('/article/subComment', article_controller.subComment);
+router.post('/article/getCommentList', article_controller.getCommentList);
 
 
 module.exports = router;

@@ -13,7 +13,7 @@ const noticeAllUser = async (ctx, next) => {
 
     if (!userId || !content ) {
         ctx.body = {
-            code: 0,
+            code: 400,
             msg: '缺少必要参数！'
         }
         return

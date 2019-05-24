@@ -680,6 +680,21 @@ const subComment = async (ctx, nest) => {
 
 }
 
+const getCommentList = async(ctx,next)=>{
+    //token认证
+    const {row,start} = ctx.request.body; 
+    const commentList  = await Comment_col.find()
+    .skip(+start)  // 转化成number
+    .limit(+row)
+    .sort({'_id':-1})
+    if(commentList){
+        ctx.body = {
+            code: 1,
+            msg: 'success',
+            data: commentList
+        }
+    }
+}
 
 module.exports = {
     publish,
@@ -694,4 +709,5 @@ module.exports = {
     giveLike,
     comment,
     subComment,
+    getCommentList,
 }
