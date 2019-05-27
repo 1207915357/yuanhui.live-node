@@ -525,9 +525,11 @@ const comment = async (ctx, nest) =>{
     const {
         userId,
         articleId,
+        articleTitle,
         content,
     } = ctx.request.body
-    if(!userId||!articleId||!content){
+    if(!userId||!articleId||!content||!articleTitle){
+        ctx.status = 400
         ctx.body = {
             code:0,
             msg:'缺少必要参数！'
@@ -548,6 +550,7 @@ const comment = async (ctx, nest) =>{
          await Comment_col.create({
              commentId,
              articleId,
+             articleTitle,
              userId,
              //评论的用户
              user: theUser,
@@ -680,6 +683,7 @@ const subComment = async (ctx, nest) => {
 
 }
 
+//后台获取评论列表
 const getCommentList = async(ctx,next)=>{
     //token认证
     const {row,start} = ctx.request.body; 
@@ -696,6 +700,11 @@ const getCommentList = async(ctx,next)=>{
     }
 }
 
+//审核评论
+const checkComment = async(ctx,next)=>{
+  const {status,commentId} = ctx.request.body  
+}
+
 module.exports = {
     publish,
     articleList,
@@ -710,4 +719,5 @@ module.exports = {
     comment,
     subComment,
     getCommentList,
+    checkComment
 }

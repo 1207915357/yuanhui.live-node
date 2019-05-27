@@ -10,6 +10,9 @@ const user_router = require('./api/user-router.js');
 const article_router = require('./api/article-router.js');
 const tag_router = require('./api/tag-router.js');
 const notice_router = require('./api/notice-router.js');    
+const comment_router = require('./api/comment-router.js');
+// const index_router = require('./api/index-router.js');
+
 
 const app = new Koa();
 
@@ -51,6 +54,8 @@ app
 .use(article_router.routes()).use(article_router.allowedMethods())
 .use(tag_router.routes()).use(tag_router.allowedMethods())
 .use(notice_router.routes()).use(notice_router.allowedMethods())
+.use(comment_router.routes()).use(comment_router.allowedMethods())
+// .use(index_router.routes()).use(index_router.allowedMethods())
 
 //启动服务监听端口
 .listen(config.port,function(){

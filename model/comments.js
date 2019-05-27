@@ -10,9 +10,17 @@ const commentsSchema = new Schema({
         type: String,
         required: true
     },
+    articleTitle: {
+        type: String,
+        required: true
+    },
     userId:{
         type:String,
         required: true
+    },
+    status:{ // 0 通过 | 1 违规 | 2 折叠
+        type:Number,
+        default: 0
     },
     //评论的用户
     user: {  
@@ -32,6 +40,10 @@ const commentsSchema = new Schema({
     },
     //子评论
     sub_comment:[{
+        status: { // 0 通过 | 1 违规 | 2 折叠
+            type: Number,
+            default: 0
+        },
        user: {
            userId: {type: String },
            userName: {type: String},
