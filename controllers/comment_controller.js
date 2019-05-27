@@ -138,6 +138,8 @@ const subComment = async (ctx, nest) => {
         })
         let sub_comment = result_comment.sub_comment
         sub_comment.push({
+            commentId,
+            articleId,
             user: theUser,
             toUser: theToUser,
             content,
@@ -193,7 +195,7 @@ const getCommentList = async (ctx, next) => {
         start,
         articleId
     } = ctx.request.body;
-    let commentList = ""
+    let commentList,AllList
     if(articleId){
          commentList = await Comment_col.find({
                  articleId
@@ -203,6 +205,8 @@ const getCommentList = async (ctx, next) => {
              .sort({
                  '_id': -1
              })
+         AllList = await Comment_col.find({articleId})
+
     }else{
          commentList = await Comment_col.find()
             .skip(+start) // 转化成number
@@ -210,13 +214,17 @@ const getCommentList = async (ctx, next) => {
             .sort({
                 '_id': -1
             })
+         AllList = await Comment_col.find()
+
     }
+
     
     if (commentList) {
         ctx.body = {
             code: 1,
             msg: 'success',
-            data: commentList
+            data: commentList,
+            total:AllList.length
         }
     }
 }
@@ -225,8 +233,59 @@ const getCommentList = async (ctx, next) => {
 const checkComment = async (ctx, next) => {
     const {
         status,
-        commentId
+        commentId,
+        type,
+        id,
+        articleId
     } = ctx.request.body
+
+    let updateComment
+    if(type=="parent"){
+        updateComment = await Comment_col.updateOne(
+            {commentId},
+            {status}
+        )
+    }else if(type=="children"){
+         const result_comment = await Comment_col.findOne({
+             commentId
+         })
+         let sub_comment = result_comment.sub_comment
+         for (let ele of sub_comment){
+             if(ele._id == id){
+                 ele.status = status
+             }
+         }
+         updateComment = await Comment_col.updateOne({
+             commentId
+         }, {
+             sub_comment
+         })
+    }
+
+    // ???待优化  更新文章的评论列表
+      const commentList = await Comment_col.find({
+          articleId
+      }).sort({
+          '_id': -1
+      })
+      const article = await Article_col.updateOne({
+          articleId
+      }, {
+          commentList,
+      })
+
+    if(updateComment){
+          ctx.body = {
+              code: 1,
+              msg: 'success',
+              data: null
+          }
+    }else{
+        ctx.body = {
+            code: 0,
+            msg: 'failed'
+        }
+    }
 }
 
 

@@ -6,6 +6,10 @@ const commentsSchema = new Schema({
         type: String,
         required:true
     },
+    type:{
+        type:String,
+        default:"parent"
+    },
     articleId: {
         type: String,
         required: true
@@ -40,6 +44,16 @@ const commentsSchema = new Schema({
     },
     //子评论
     sub_comment:[{
+        commentId: {
+            type: String,
+        },
+         articleId: {
+             type: String,
+         },
+        type: {
+            type: String,
+            default: "children"
+        },
         status: { // 0 通过 | 1 违规 | 2 折叠
             type: Number,
             default: 0
