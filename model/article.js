@@ -41,9 +41,9 @@ const articleSchema = new Schema({
         type: Number,
         default: 0
     },
-    commentList: {
-        type: Array,
-    },
+    // commentList: {
+    //     type: Array,
+    // },
     author: {
         userId: {
             type: String,

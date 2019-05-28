@@ -7,5 +7,6 @@ router.post('/comment/comment', comment_controller.comment);
 router.post('/comment/subComment', comment_controller.subComment);
 router.post('/comment/getCommentList', comment_controller.getCommentList);
 router.post('/comment/checkComment', comment_controller.checkComment);
+router.post('/comment/deleteComment', comment_controller.deleteComment);
 
 module.exports = router;

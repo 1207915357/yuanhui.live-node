@@ -7,7 +7,6 @@
  * @Description: comment controller 
  */
 
-
 const Article_col = require('../model/article');
 const User_col = require('../model/user');
 const Comment_col = require('../model/comments.js');
@@ -60,16 +59,15 @@ const comment = async (ctx, nest) => {
             //子评论
             sub_comment: [],
         })
-        const commentList = await Comment_col.find({
-            articleId
-        }).sort({
-            '_id': -1
-        })
-
+        // const commentList = await Comment_col.find({
+        //     articleId
+        // }).sort({
+        //     '_id': -1
+        // })
         const article = await Article_col.updateOne({
             articleId
         }, {
-            commentList,
+            // commentList,
             $inc: {
                 comments: 1
             }
@@ -110,6 +108,7 @@ const subComment = async (ctx, nest) => {
         content,
     } = ctx.request.body
     if (!userId || !toUserId || !articleId || !commentId || !content) {
+        ctx.status = 400
         ctx.body = {
             code: 0,
             msg: '缺少必要参数！'
@@ -149,16 +148,10 @@ const subComment = async (ctx, nest) => {
         }, {
             sub_comment
         })
-
-        const commentList = await Comment_col.find({
-            articleId
-        }).sort({
-            '_id': -1
-        })
         const article = await Article_col.updateOne({
             articleId
         }, {
-            commentList,
+            // commentList,
             $inc: {
                 comments: 1
             }
@@ -187,9 +180,8 @@ const subComment = async (ctx, nest) => {
 
 }
 
-//后台获取评论列表
+//获取评论列表
 const getCommentList = async (ctx, next) => {
-    //token认证
     const {
         row,
         start,
@@ -218,7 +210,6 @@ const getCommentList = async (ctx, next) => {
 
     }
 
-    
     if (commentList) {
         ctx.body = {
             code: 1,
@@ -226,6 +217,11 @@ const getCommentList = async (ctx, next) => {
             data: commentList,
             total:AllList.length
         }
+    }else{
+         ctx.body = {
+             code: 0,
+             msg: 'failed'
+         }
     }
 }
 
@@ -236,8 +232,17 @@ const checkComment = async (ctx, next) => {
         commentId,
         type,
         id,
-        articleId
+        // articleId
     } = ctx.request.body
+
+    if (!status || !commentId || !type || !id) {
+        ctx.status = 400
+        ctx.body = {
+            code: 0,
+            msg: '缺少必要参数！'
+        }
+        return
+    }
 
     let updateComment
     if(type=="parent"){
@@ -246,10 +251,10 @@ const checkComment = async (ctx, next) => {
             {status}
         )
     }else if(type=="children"){
-         const result_comment = await Comment_col.findOne({
+         const commentItem = await Comment_col.findOne({
              commentId
          })
-         let sub_comment = result_comment.sub_comment
+         let sub_comment = commentItem.sub_comment
          for (let ele of sub_comment){
              if(ele._id == id){
                  ele.status = status
@@ -261,19 +266,6 @@ const checkComment = async (ctx, next) => {
              sub_comment
          })
     }
-
-    // ???待优化  更新文章的评论列表
-      const commentList = await Comment_col.find({
-          articleId
-      }).sort({
-          '_id': -1
-      })
-      const article = await Article_col.updateOne({
-          articleId
-      }, {
-          commentList,
-      })
-
     if(updateComment){
           ctx.body = {
               code: 1,
@@ -288,11 +280,60 @@ const checkComment = async (ctx, next) => {
     }
 }
 
+//删除评论
+const deleteComment = async(ctx,next)=>{
+    const {commentId,type,id,articleId} = ctx.request.body
+    let deleteFlag,comments = -1
+     const commentItem = await Comment_col.findOne({
+         commentId
+     })
+     let sub_comment = commentItem.sub_comment
+     let length = sub_comment.length
+    if(type=="parent"){
+         deleteFlag = await Comment_col.deleteOne({commentId}) //连子评论一起删除
+         comments -= length // 减上子评论的条数 更新
+    }else{
+        for (let [i,ele] of sub_comment.entries()) {
+            if (ele._id == id) {
+                sub_comment.splice(i,1)
+            }
+        }
+        console.log(sub_comment,'sub')
+        deleteFlag = await Comment_col.updateOne({
+            commentId
+        }, {
+            sub_comment
+        })
 
+    }
+    await Article_col.updateOne({
+         articleId
+     }, {
+         // commentList,
+         $inc: {
+             comments
+         }
+     })
+    if (deleteFlag) {
+          ctx.body = {
+              code: 1,
+              msg: 'success',
+              data: null
+          }
+    }
+    else {
+        ctx.status = 500
+        ctx.body = {
+            code: 0,
+            msg: 'failed'
+        }
+    }
+}
 
 module.exports = {
     comment,
     subComment,
     getCommentList,
-    checkComment
+    checkComment,
+    deleteComment
 }
