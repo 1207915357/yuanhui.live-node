@@ -25,10 +25,13 @@ const post = async (ctx, next) => {
 
 // 登录
 const login = async (ctx, next) => {
-  const req = ctx.request.body;
+  const {
+    userName,
+    password
+  } = ctx.request.body;
   // 获取用户的 userId
   const user = await User_col.findOne({
-    userName: req.userName
+    userName
   });
   if (!user) {
     ctx.status = 200;
@@ -38,10 +41,9 @@ const login = async (ctx, next) => {
     }
     return;
   }
-
-  const password = user.password;
+  const thePassword = user.password;
   ctx.status = 200;
-  if (password === passport.cryptoPwd(req.password)) {
+  if (thePassword === passport.cryptoPwd(password)) {
     const resData = {
          userId: user.userId,
         //  userName: user.userName,
@@ -54,12 +56,11 @@ const login = async (ctx, next) => {
           token: passport.getToken(resData) 
       }
     }
-    return;
-  }
-
-  ctx.body = {
-    code: 301,
-    msg: 'account or password error!'
+  }else{
+    ctx.body = {
+      code: 301,
+      msg: 'account or password error!'
+    }
   }
 }
 

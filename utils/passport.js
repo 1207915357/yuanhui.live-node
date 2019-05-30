@@ -28,10 +28,9 @@ const getJWTPayload = function(token) {
         }
         return decoded
     });
-
-
-
 }
+
+
 module.exports = {
     cryptoPwd,
     getToken,
